@@ -1,7 +1,7 @@
 #dont change this
-ConfigVersion: 1.0
+configVersion: 1.0
 #if set to true, the location of a schematic when spawned will be printed to the console
-ShowLocation: true
+showLocation: true
 #shows additional debug info in console
 debug: false
 #when debug is set to true, these options can be set to true or false to enable additional debug info

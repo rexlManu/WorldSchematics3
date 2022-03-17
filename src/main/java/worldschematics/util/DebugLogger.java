@@ -5,6 +5,7 @@ import worldschematics.WorldSchematics;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -12,15 +13,14 @@ import java.util.logging.Logger;
  */
 public class DebugLogger {
 
+    private static boolean DEBUG = false;
 
-    private static boolean debug = false;
-
-    private static boolean debugLootTables = false;
-    private static boolean debugSchematicInfo = false;
-    private static boolean debugSchematicSpawning = false;
-    private static boolean debugMobSpawning = false;
-    private static boolean debugWorldGeneration = false;
-    private static boolean debugMarkers = false;
+    private static boolean DEBUG_LOOT_TABLES = false;
+    private static boolean DEBUG_SCHEMATIC_INFO = false;
+    private static boolean DEBUG_SCHEMATIC_SPAWNING = false;
+    private static boolean DEBUG_MOB_SPAWNING = false;
+    private static boolean DEBUG_WORLD_GENERATION = false;
+    private static boolean DEBUG_MARKERS = false;
 
     private static boolean logToFile;
 
@@ -33,11 +33,9 @@ public class DebugLogger {
         createLogFile();
     }
 
-
     public enum DebugType {
         LOOTTABLE, LOOT, MISC, SCHEMATICINFO, SCHEMATICSPAWNING, MOBSPAWNING, WORLDGENERATION, MARKER, INFO, WARNING
     }
-
 
     public static void log(String message) {
         log(message, DebugType.MISC);
@@ -46,37 +44,33 @@ public class DebugLogger {
     // logs messages only if debug option in config is set to true
     public static void log(String message, DebugType type) {
 
-        if(type == DebugType.WARNING){
-            logger.info("[WARNING] " + message);
+        if (type == DebugType.WARNING) {
+            logger.log(Level.INFO, "[WARNING] {0}", message);
         }
 
-        if (debug == true) {
-            if (type == DebugType.MISC)
-                logger.info("[Debug] " + message);
-            //writeToLogFile("[Debug] " + message);
-            if (type == DebugType.SCHEMATICSPAWNING)
-                if (debugSchematicSpawning == true)
-                    logger.info("[Debug - SchematicSpawning] " + message);
-            //writeToLogFile("[Debug - SchematicSpawning] " + message);
-            if (type == DebugType.SCHEMATICINFO)
-                if (debugSchematicInfo == true)
-                    logger.info("[Debug - SchematicInfo] " + message);
-            //writeToLogFile("[Debug - SchematicInfo] " + message);
-            if (type == DebugType.LOOTTABLE || type == DebugType.LOOT)
-                if (debugLootTables == true)
-                    logger.info("[Debug - loot] " + message);
-            //writeToLogFile("[Debug - loot] " + message);
-            if (type == DebugType.MOBSPAWNING)
-                if (debugMobSpawning == true)
-                    logger.info("[Debug - MobsSpawning] " + message);
-            //writeToLogFile("[Debug - MobsSpawning] " + message);
-            if (type == DebugType.WORLDGENERATION)
-                if (debugWorldGeneration == true)
-                    logger.info("[Debug - World Generation] " + message);
+        if (DEBUG == true) {
+            if (type == DebugType.MISC) {
+                logger.log(Level.INFO, "[Debug] {0}", message);
+            }
+            if (type == DebugType.SCHEMATICSPAWNING && DEBUG_SCHEMATIC_SPAWNING) {
+                logger.log(Level.INFO, "[Debug - SchematicSpawning] {0}", message);
+            }
+            if (type == DebugType.SCHEMATICINFO && DEBUG_SCHEMATIC_INFO) {
+                logger.log(Level.INFO, "[Debug - SchematicInfo] {0}", message);
+            }
+            if (type == DebugType.LOOTTABLE || type == DebugType.LOOT && DEBUG_LOOT_TABLES) {
+                logger.log(Level.INFO, "[Debug - loot] {0}", message);
+            }
+            if (type == DebugType.MOBSPAWNING && DEBUG_MOB_SPAWNING) {
+            }
+            logger.log(Level.INFO, "[Debug - MobsSpawning] {0}", message);
+            if (type == DebugType.WORLDGENERATION && DEBUG_WORLD_GENERATION) {
+                logger.log(Level.INFO, "[Debug - World Generation] {0}", message);
+            }
             //writeToLogFile("[Debug - World Generation] " + message);
-            if (type == DebugType.MARKER)
-                if (debugMarkers == true)
-                    logger.info("[Debug - Markers] " + message);
+            if (type == DebugType.MARKER && DEBUG_MARKERS) {
+                logger.log(Level.INFO, "[Debug - Markers] {0}", message);
+            }
         }
     }
 
@@ -84,9 +78,9 @@ public class DebugLogger {
         if (logToFile == true && WorldSchematics.getInstance().isFinishedLoading() == true && logFile.exists()) {
             try {
                 FileOutputStream fos = new FileOutputStream(logFile);
-                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-                bw.write(message);
-                bw.close();
+                try ( BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos))) {
+                    bw.write(message);
+                }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
                 logger.info("ERROR: Unable to write to Log file. File not does not exist");
@@ -119,57 +113,57 @@ public class DebugLogger {
     }
 
     public boolean isDebug() {
-        return debug;
+        return DEBUG;
     }
 
     public void setDebug(boolean debug) {
-        logger.info("Debug set to: " + debug);
-        DebugLogger.debug = debug;
+        logger.log(Level.INFO, "Debug set to: {0}", debug);
+        DebugLogger.DEBUG = debug;
     }
 
     public boolean isDebugLootTables() {
-        return debugLootTables;
+        return DEBUG_LOOT_TABLES;
     }
 
     public void setDebugLootTables(boolean debugLootTables) {
-        logger.info("LootTable Debug set to: " + debugLootTables);
-        DebugLogger.debugLootTables = debugLootTables;
+        logger.log(Level.INFO, "LootTable Debug set to: {0}", debugLootTables);
+        DebugLogger.DEBUG_LOOT_TABLES = debugLootTables;
     }
 
     public boolean isDebugSchematicInfo() {
-        return debugSchematicInfo;
+        return DEBUG_SCHEMATIC_INFO;
     }
 
     public void setDebugSchematicInfo(boolean debugSchematicInfo) {
-        logger.info("Schematic Info Debug set to: " + debugSchematicInfo);
-        DebugLogger.debugSchematicInfo = debugSchematicInfo;
+        logger.log(Level.INFO, "Schematic Info Debug set to: {0}", debugSchematicInfo);
+        DebugLogger.DEBUG_SCHEMATIC_INFO = debugSchematicInfo;
     }
 
     public boolean isDebugSchematicSpawning() {
-        return debugSchematicSpawning;
+        return DEBUG_SCHEMATIC_SPAWNING;
     }
 
     public void setDebugSchematicSpawning(boolean debugSchematicSpawning) {
-        logger.info("Schematic Spawning Debug set to: " + debugSchematicSpawning);
-        DebugLogger.debugSchematicSpawning = debugSchematicSpawning;
+        logger.log(Level.INFO, "Schematic Spawning Debug set to: {0}", debugSchematicSpawning);
+        DebugLogger.DEBUG_SCHEMATIC_SPAWNING = debugSchematicSpawning;
     }
 
     public boolean isDebugMobSpawning() {
-        return debugMobSpawning;
+        return DEBUG_MOB_SPAWNING;
     }
 
     public void setDebugMobSpawning(boolean debugMobSpawning) {
-        logger.info("Mobspawning debug set to: " + debugMobSpawning);
-        DebugLogger.debugMobSpawning = debugMobSpawning;
+        logger.log(Level.INFO, "Mobspawning debug set to: {0}", debugMobSpawning);
+        DebugLogger.DEBUG_MOB_SPAWNING = debugMobSpawning;
     }
 
     public boolean isDebugWorldGeneration() {
-        return debugWorldGeneration;
+        return DEBUG_WORLD_GENERATION;
     }
 
     public void setDebugWorldGeneration(boolean debugWorldGeneration) {
-        logger.info("WorldGeneration debug set to: " + debugWorldGeneration);
-        DebugLogger.debugWorldGeneration = debugWorldGeneration;
+        logger.log(Level.INFO, "WorldGeneration debug set to: {0}", debugWorldGeneration);
+        DebugLogger.DEBUG_WORLD_GENERATION = debugWorldGeneration;
     }
 
     public boolean isLogToFile() {
@@ -177,18 +171,17 @@ public class DebugLogger {
     }
 
     public void setLogToFile(boolean logToFile) {
-        logger.info("Log to file set to: " + logToFile);
+        logger.log(Level.INFO, "Log to file set to: {0}", logToFile);
         DebugLogger.logToFile = logToFile;
     }
 
     public boolean isDebugMarkers() {
-        return debugMarkers;
+        return DEBUG_MARKERS;
     }
 
     public void setDebugMarkers(boolean debugMarkers) {
-        logger.info("Markers Debug set to: " + debugMarkers);
-        DebugLogger.debugMarkers = debugMarkers;
+        logger.log(Level.INFO, "Markers Debug set to: {0}", debugMarkers);
+        DebugLogger.DEBUG_MARKERS = debugMarkers;
     }
-
 
 }

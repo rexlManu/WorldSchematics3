@@ -1,10 +1,19 @@
 package worldschematics;
 
+import optic_fusion1.worldschematics.MetricsLite;
 import com.sk89q.worldedit.EmptyClipboardException;
 import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.world.DataException;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.ParseException;
+import java.util.logging.Level;
+import javax.json.JsonException;
+import optic_fusion1.worldschematics.SchematicManager;
 import org.apache.commons.io.FilenameUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -15,45 +24,33 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.json.JSONException;
-import org.json.simple.parser.ParseException;
 import worldschematics.util.DebugLogger;
-
-import java.io.*;
 
 public class WorldSchematics extends JavaPlugin implements Listener {
 
-    static File PluginFolder;
+    private DebugLogger DBlogger;
 
-
-    private static DebugLogger DBlogger;
-
-    private static boolean finishedLoading = false;
-    private static PluginDescriptionFile pdf;
+    private boolean finishedLoading = false;
+    private PluginDescriptionFile pdf;
 
     private WorldSchematics plugin = this;
 
     private static WorldSchematics instance;
 
-    private static Boolean ShowLocation;
-    private static Boolean SpawnSchematicsOn = true;
-    private static Boolean MythicMobsInstalled = false;
-    private static Boolean CrackShotInstalled = false;
-    private static Boolean WorldGuardInstalled = false;
-    private static Boolean MagicPluginInstalled = false;
+    private boolean showLocation;
+    private boolean spawnSchematicsOn = true;
+    private boolean mythicMobsInstalled = false;
+    private boolean mythicMobsLoaded = false;
 
-    private static Boolean MythicMobsLoaded = false;
+    private SchematicManager sm;
 
-    private schematicManager sm;
-
-    private static File baseServerDir;
+    private File baseServerDir;
 
     //on server start up
+    @Override
     public void onEnable() {
-        PluginFolder = getDataFolder();
         instance = this;
 
         //Start the debugger
@@ -70,15 +67,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         DBlogger.setLogToFile(getConfig().getBoolean("debugOptions.logToFile", false));
 
         //Start the schematicManager
-        try {
-            sm = new schematicManager(this);
-        } catch (DataException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        sm = new SchematicManager(this);
 
         //need to see if worldedit is installed first or else this wont even work
         if (getServer().getPluginManager().getPlugin("WorldEdit") == null) {
@@ -94,32 +83,12 @@ public class WorldSchematics extends JavaPlugin implements Listener {
 
         }
 
-        if (getServer().getPluginManager().getPlugin("CrackShot") != null) {
-            getLogger().info("CrackShot detected, hooked into CrackShot!");
-            setCrackShotInstalled(true);
-        }
-
-        if (getServer().getPluginManager().getPlugin("Magic") != null) {
-            getLogger().info("Magic detected, hooked into Magic!");
-            setMagicPluginInstalled(true);
-
-
-        }
-
-        /*
-        if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
-            getLogger().info("WorldGuard detected, hooked into WorldGuard!");
-            setWorldGuardInstalled(true);
-        }
-*/
-
         // register commands
         this.getCommand("worldschematics").setExecutor(this);
 
         // register listener
         //getServer().getPluginManager().registerEvents(new ChunkListener(this), this);
         getServer().getPluginManager().registerEvents(sm, this);
-
 
         try {
             loadPlugin();
@@ -130,37 +99,30 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         }
 
         //start metrics
-        Metrics metrics = new Metrics(this);
+        new MetricsLite(this, 14635);
 
         pdf = this.getDescription();
 
         baseServerDir = getServer().getWorldContainer();
 
-
     }
-
-    // returns plugin folder
-    public static File getFilepath() {
-        return PluginFolder;
-    }
-
 
     //loads/reloads the plugin and all its options
     void loadPlugin() throws IOException, DataException {
 
         finishedLoading = false;
 
-
-
-        File configFile = new File(PluginFolder + "/config.yml");
+        File configFile = new File(getDataFolder(), "config.yml");
         File LootTableFolder = new File(getDataFolder() + "/LootTables");
 
         // make config file and plugin directory
-        if (PluginFolder.exists() == false)
-            PluginFolder.mkdir();
+        if (getDataFolder().exists() == false) {
+            getDataFolder().mkdir();
+        }
 
-        if (LootTableFolder.exists() == false)
+        if (LootTableFolder.exists() == false) {
             LootTableFolder.mkdir();
+        }
 
         if (!configFile.exists()) {
             saveDefaultConfig();
@@ -176,8 +138,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         DBlogger.setDebugMarkers(getConfig().getBoolean("debugOptions.debugMarkers", false));
         DBlogger.setLogToFile(getConfig().getBoolean("debugOptions.logToFile", false));
 
-        ShowLocation = getConfig().getBoolean("ShowLocation", false);
-
+        showLocation = getConfig().getBoolean("ShowLocation", false);
 
         // update and create config files
         updateConfigs();
@@ -186,18 +147,16 @@ public class WorldSchematics extends JavaPlugin implements Listener {
     }
 
     // used to copy files from the .jar file to the config folders
-    void copy(InputStream in, File file) {
+    public void copy(InputStream in, File file) {
         try {
-            OutputStream out = new FileOutputStream(file);
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
+            try (in;  OutputStream out = new FileOutputStream(file)) {
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
             }
-
-            out.close();
-            in.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -211,8 +170,6 @@ public class WorldSchematics extends JavaPlugin implements Listener {
     // performance
     // so we dont use up resources reading/writing to disk when new chunks are
     // created
-
-
     // automatically update configs with new options and make this user friendly
     // for servers
     private void updateConfigs() throws IOException, DataException {
@@ -223,9 +180,9 @@ public class WorldSchematics extends JavaPlugin implements Listener {
     private void updateConfigs(boolean AddMissingOptions) throws IOException, DataException {
         getLogger().info("Updating and creating config files for schematics");
         for (World world : getServer().getWorlds()) {
-            getLogger().info("Checking schematic configs for world " + world.getName());
+            getLogger().log(Level.INFO, "Checking schematic configs for world {0}", world.getName());
 
-            File worldPath = new File(PluginFolder + "/Schematics/" + world.getName());
+            File worldPath = new File("WorldSchematics", "/schematics/" + world.getName());
             File[] directoryListing = worldPath.listFiles();
             for (File child : directoryListing) {
                 String fileext = FilenameUtils.getExtension(child.getAbsolutePath());
@@ -237,11 +194,10 @@ public class WorldSchematics extends JavaPlugin implements Listener {
                         plugin.copy(plugin.getResource("ExampleSchematic.yml"), ConfigFile);
                     }
 
-
                     // if we should add missing config options. This deletes all
                     // comments in the config however
                     if (AddMissingOptions) {
-                        getLogger().info("Checking config file for schematic " + schematicfilename);
+                        getLogger().log(Level.INFO, "Checking config file for schematic {0}", schematicfilename);
 
                         FileConfiguration data = YamlConfiguration.loadConfiguration(ConfigFile);
 
@@ -267,32 +223,18 @@ public class WorldSchematics extends JavaPlugin implements Listener {
 
     }
 
-    //return instance of WorldGuar
-    public WorldGuardPlugin getWorldGuard() {
-        Plugin plugin = getServer().getPluginManager().getPlugin("WorldGuard");
-
-        // WorldGuard may not be loaded
-        if (plugin == null || !(plugin instanceof WorldGuardPlugin)) {
-            return null; // Maybe you want throw an exception instead
-        }
-
-        return (WorldGuardPlugin) plugin;
-    }
-
     // reloads the plugin and any schematics
-    void reload() throws DataException, IOException, JSONException, ParseException {
+    void reload() throws DataException, IOException, JsonException, ParseException {
         getLogger().info("Reloading Plugin");
         loadPlugin();
         sm.reloadSchematics();
         getLogger().info("Plugin reloaded!");
     }
 
-
-
     // handles commands typed in game
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args)  throws JSONException {
-        Boolean IsPlayer = false;
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) throws JsonException {
+        boolean IsPlayer = false;
         Player player = null;
         if ((sender instanceof Player)) {
             player = (Player) sender;
@@ -323,7 +265,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
                         }
 
                         getLogger().info("Schematic spawning has been turned off");
-                        SpawnSchematicsOn = false;
+                        spawnSchematicsOn = false;
                     }
 
                     if (args[0].equalsIgnoreCase("on")) {
@@ -334,7 +276,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
                         }
 
                         getLogger().info("Schematic spawning has been turned on");
-                        SpawnSchematicsOn = true;
+                        spawnSchematicsOn = true;
                     }
 
                 }
@@ -377,7 +319,6 @@ public class WorldSchematics extends JavaPlugin implements Listener {
                     //display plugin version info
                     getLogger().info("WorldSchematics2 version: " + pdf.getVersion());
 
-
                     //send a message to the player if executed in game
                     if (IsPlayer) {
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', "WorldSchematics2 version: " + pdf.getVersion()));
@@ -395,9 +336,8 @@ public class WorldSchematics extends JavaPlugin implements Listener {
 
                     Location spawnPos = player.getLocation();
 
-
                     try {
-                        schematicManager.spawn(shcemticsName,spawnPos);
+                        SchematicManager.spawn(shcemticsName, spawnPos);
                     } catch (EmptyClipboardException e) {
                         e.printStackTrace();
                     } catch (com.sk89q.worldedit.world.DataException e) {
@@ -429,48 +369,23 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         return finishedLoading;
     }
 
-    public static Boolean getMythicMobsInstalled() {
-        return MythicMobsInstalled;
+    public boolean getMythicMobsInstalled() {
+        return mythicMobsInstalled;
     }
 
-    private static void setMythicMobsInstalled(Boolean mythicMobsInstalled) {
-        MythicMobsInstalled = mythicMobsInstalled;
+    private void setMythicMobsInstalled(boolean mythicMobsInstalled) {
+        this.mythicMobsInstalled = mythicMobsInstalled;
     }
 
-    public static Boolean getCrackShotInstalled() {
-        return CrackShotInstalled;
+    public boolean isSpawnSchematicsOn() {
+        return spawnSchematicsOn;
     }
 
-    private static void setCrackShotInstalled(Boolean crackShotInstalled) {
-        CrackShotInstalled = crackShotInstalled;
+    public boolean getShowLocation() {
+        return showLocation;
     }
 
-    public static Boolean getWorldGuardInstalled() {
-        return WorldGuardInstalled;
-    }
-
-    private static void setWorldGuardInstalled(Boolean worldGuardInstalled) {
-        WorldGuardInstalled = worldGuardInstalled;
-    }
-
-    public static Boolean getMagicPluginInstalled() {
-        return MagicPluginInstalled;
-    }
-
-    private static void setMagicPluginInstalled(Boolean magicPluginInstalled) {
-        MagicPluginInstalled = magicPluginInstalled;
-    }
-
-
-    public static Boolean isSpawnSchematicsOn() {
-        return SpawnSchematicsOn;
-    }
-
-    public static Boolean getShowLocation() {
-        return ShowLocation;
-    }
-
-    public static File getBaseServerDirectory(){
+    public File getBaseServerDirectory() {
 
         return baseServerDir;
     }

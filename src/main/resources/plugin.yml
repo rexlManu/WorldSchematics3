@@ -1,14 +1,18 @@
-name: WorldSchematics2
-main: worldschematics.WorldSchematics
-version: 2.8.0a
-author: Robotnikman
-load: POSTWORLD
+name: WorldSchematics3
 description: Spawns .schematics into newly generated chunks.
-website:
+version: ${project.version}
+author: Optic_Fusion1
+main: worldschematics.WorldSchematics
+api-version: 1.18
+load: POSTWORLD
+depend: [WorldEdit]
+softdepend: [MythicMobs]
+
 commands:
   worldschematics:
     description: The main worldschematics Command
     permission: worldschematics.admin
+
 permissions:
   worldschematics.*:
     description: Gives access to all worldschematics commands
@@ -17,7 +21,3 @@ permissions:
   worldschematics.admin:
     description: Allows you to use worldschematics Admin commands
     default: op
-  
-depend: [WorldEdit]
-softdepend: [MythicMobs, CrackShot, Magic]
-api-version: 1.13
