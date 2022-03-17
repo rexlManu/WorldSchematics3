@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
+import optic_fusion1.worldschematics.util.Utils;
 import org.apache.commons.io.FilenameUtils;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -73,7 +74,7 @@ public class SchematicManager implements Listener {
                 File configFile = new File(worldPath, schematicFileName + ".yml");
                 if (!configFile.exists()) {
                     DebugLogger.log("Schematic doesn't have config file, creating config file");
-                    plugin.copy(plugin.getResource("ExampleSchematic.yml"), configFile);
+                    Utils.copy(plugin.getResource("ExampleSchematic.yml"), configFile);
                 }
 
                 SpawnSchematic spawnSchematic = new SpawnSchematic(schematicFileName, world);
@@ -137,12 +138,12 @@ public class SchematicManager implements Listener {
         pastePosY += basementDepth;
 
         // Take into account offset
-        pastePosX = pastePosX + schematic.offsetX();
-        pastePosY = pastePosY + schematic.offsetY();
-        pastePosZ = pastePosZ + schematic.offsetZ();
+        pastePosX = pastePosX + schematic.getConfigOffsetX();
+        pastePosY = pastePosY + schematic.getConfigOffsetY();
+        pastePosZ = pastePosZ + schematic.getConfigOffsetZ();
 
         // TODO: Check if the file is read from disk each time.
-        if (plugin.isSpawnSchematicsOn() && schematic.enabled()) {
+        if (plugin.isSpawnSchematicsOn() && schematic.isEnabled()) {
             schematic.spawn(world, pastePosX, pastePosY, pastePosZ);
         }
     }

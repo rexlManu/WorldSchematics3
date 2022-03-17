@@ -32,7 +32,7 @@ public class SchematicSpawner extends AbstractSchematicBlock {
         mobsList = configSection.getStringList("mobs");
     }
 
-    public List<String> mobsList() {
+    public List<String> getMobsList() {
         return mobsList;
     }
 
@@ -66,7 +66,7 @@ public class SchematicSpawner extends AbstractSchematicBlock {
     private void createMob(Location location) {
         DebugLogger.log("Found Mob in config, attempting to spawn", DebugLogger.DebugType.MOBSPAWNING);
         Random random = new Random();
-        String randomMob = mobsList().get(random.nextInt(mobsList().size()));
+        String randomMob = getMobsList().get(random.nextInt(getMobsList().size()));
         int amount = configSection().getInt("properties.amount", 1);
 
         DebugLogger.log("Spawning " + amount + "of Mob " + randomMob + " at " + location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ(), DebugLogger.DebugType.MOBSPAWNING);
@@ -78,11 +78,11 @@ public class SchematicSpawner extends AbstractSchematicBlock {
 
     private void createMythicMob(Location location) {
         DebugLogger.log("Found MythicMob in config, attempting to spawn", DebugLogger.DebugType.MOBSPAWNING);
-        if (!WorldSchematics.getInstance().getMythicMobsInstalled()) {
+        if (!WorldSchematics.instance().getMythicMobsInstalled()) {
             return;
         }
         Random random = new Random();
-        String randomMob = mobsList().get(random.nextInt(mobsList().size()));
+        String randomMob = getMobsList().get(random.nextInt(getMobsList().size()));
         int amount = configSection().getInt("properties.amount", 1);
 
         // Get the instance of MythicMobs and remove the spawner block itself
@@ -114,7 +114,7 @@ public class SchematicSpawner extends AbstractSchematicBlock {
 
         CreatureSpawner spawner = (CreatureSpawner) block.getState();
         Random random = new Random();
-        String randomMob = mobsList().get(random.nextInt(mobsList().size()));
+        String randomMob = getMobsList().get(random.nextInt(getMobsList().size()));
         spawner.setSpawnedType(EntityType.valueOf(randomMob));
 
         // Set cooldown if specified
@@ -127,12 +127,12 @@ public class SchematicSpawner extends AbstractSchematicBlock {
 
     private void createMythicMobSpawner(Location location) {
         DebugLogger.log("Found MythicMobs spawner in config, attempting to create", DebugLogger.DebugType.MOBSPAWNING);
-        if (!WorldSchematics.getInstance().getMythicMobsInstalled()) {
-            WorldSchematics.getInstance().getLogger().info("tried creating MythicMobs spawner but MythicMobs is not installed");
+        if (!WorldSchematics.instance().getMythicMobsInstalled()) {
+            WorldSchematics.instance().getLogger().info("tried creating MythicMobs spawner but MythicMobs is not installed");
             return;
         }
         Random random = new Random();
-        String randomMob = mobsList().get(random.nextInt(mobsList().size()));
+        String randomMob = getMobsList().get(random.nextInt(getMobsList().size()));
         SpawnerManager spawnerManager = MythicMobs.inst().getSpawnerManager();
         Block block = location.getBlock();
         String spawnerName = "WorldSchamatics_" + location.getWorld().getName() + "_x" + location.getBlockX() + "_y" + location.getBlockY() + "_z" + location.getBlockZ() + "_" + randomMob;

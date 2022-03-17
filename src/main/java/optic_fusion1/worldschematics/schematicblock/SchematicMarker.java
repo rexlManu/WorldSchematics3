@@ -1,6 +1,5 @@
 package optic_fusion1.worldschematics.schematicblock;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.world.DataException;
 import java.io.IOException;
@@ -8,9 +7,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 import javax.json.JsonException;
 import optic_fusion1.worldschematics.SchematicManager;
 import optic_fusion1.worldschematics.schematicblock.SchematicSpawner.SpawnerType;
@@ -96,7 +93,7 @@ public class SchematicMarker extends AbstractSchematicBlock {
     }
 
     private void createSpawner(Location location, SpawnerType spawnerType, Material type) {
-        SchematicSpawner spawner = new SchematicSpawner(location(), configSection(), name(), spawnerType);
+        SchematicSpawner spawner = new SchematicSpawner(getLocation(), configSection(), getName(), spawnerType);
         spawner.createInWorld(location);
     }
 

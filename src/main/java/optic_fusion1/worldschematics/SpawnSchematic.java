@@ -29,6 +29,7 @@ import javax.json.JsonException;
 import optic_fusion1.worldschematics.schematicblock.SchematicContainer;
 import optic_fusion1.worldschematics.schematicblock.SchematicMarker;
 import optic_fusion1.worldschematics.schematicblock.SchematicSpawner;
+import optic_fusion1.worldschematics.util.Utils;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -41,7 +42,7 @@ import worldschematics.util.DebugLogger;
 
 public class SpawnSchematic {
 
-    private static WorldSchematics WORLD_SCHEMATICS = WorldSchematics.getInstance();
+    private static WorldSchematics WORLD_SCHEMATICS = WorldSchematics.instance();
     private Random spawnChance;
     private boolean noSpawn;
     private String name;
@@ -304,8 +305,8 @@ public class SpawnSchematic {
                 blockCheck = true;
             }
             if (biomeCheck && heightCheck && spawnLimitCheck && blockCheck || skipChecks) {
-                if (WorldSchematics.getInstance().getShowLocation()) {
-                    WorldSchematics.getInstance().getLogger().info("Schematic passed all checks. Spawned schematic at: " + x + " " + y + " " + z);
+                if (WorldSchematics.instance().isShowLocation()) {
+                    WorldSchematics.instance().getLogger().info("Schematic passed all checks. Spawned schematic at: " + x + " " + y + " " + z);
                 }
 
                 // Increase spawn count
@@ -336,13 +337,13 @@ public class SpawnSchematic {
         // Load config file for the schematic
         if (!configFile.exists()) {
             DebugLogger.log("Schematic doesn't have config file, creating config file", DebugLogger.DebugType.SCHEMATICINFO);
-            WorldSchematics.getInstance().copy(WorldSchematics.getInstance().getResource("ExampleSchematic.yml"), configFile);
+            Utils.copy(WorldSchematics.instance().getResource("ExampleSchematic.yml"), configFile);
         }
 
         // load config file for the schematic blockdata
         if (!blockDataConfigFile.exists()) {
             DebugLogger.log("Schematic doesnt have config file, creating config file", DebugLogger.DebugType.SCHEMATICINFO);
-            WorldSchematics.getInstance().copy(WorldSchematics.getInstance().getResource("ExampleSchematic-blockdata.yml"), blockDataConfigFile);
+            Utils.copy(WorldSchematics.instance().getResource("ExampleSchematic-blockdata.yml"), blockDataConfigFile);
             //populate the config file with SPAWNERS in schematic, if there are any
             blockDataConfig = YamlConfiguration.loadConfiguration(blockDataConfigFile);
         }
@@ -583,7 +584,7 @@ public class SpawnSchematic {
 
     private SchematicSpawner getSpawner(String name) {
         for (SchematicSpawner sp : SPAWNERS) {
-            if (sp.name().equals(name)) {
+            if (sp.getName().equals(name)) {
                 return sp;
             }
         }
@@ -593,7 +594,7 @@ public class SpawnSchematic {
 
     private SchematicContainer getContainer(String name) {
         for (SchematicContainer ct : CONTAINERS) {
-            if (ct.name().equals(name)) {
+            if (ct.getName().equals(name)) {
                 return ct;
             }
         }
@@ -603,7 +604,7 @@ public class SpawnSchematic {
 
     private SchematicMarker getMarker(String name) {
         for (SchematicMarker mk : MARKERS) {
-            if (mk.name().equals(name)) {
+            if (mk.getName().equals(name)) {
                 return mk;
             }
         }
@@ -654,7 +655,7 @@ public class SpawnSchematic {
         return blockDataConfig;
     }
 
-    public int offsetZ() {
+    public int getConfigOffsetZ() {
         return offsetZ;
     }
 
@@ -662,7 +663,7 @@ public class SpawnSchematic {
         this.offsetZ = offsetZ;
     }
 
-    public int offsetY() {
+    public int getConfigOffsetY() {
         return offsetY;
     }
 
@@ -670,7 +671,7 @@ public class SpawnSchematic {
         this.offsetY = offsetY;
     }
 
-    public int offsetX() {
+    public int getConfigOffsetX() {
         return offsetX;
     }
 
@@ -678,7 +679,7 @@ public class SpawnSchematic {
         this.offsetX = offsetX;
     }
 
-    public boolean enabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 

@@ -6,14 +6,12 @@ import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.world.DataException;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.logging.Level;
 import javax.json.JsonException;
 import optic_fusion1.worldschematics.SchematicManager;
+import optic_fusion1.worldschematics.util.Utils;
 import org.apache.commons.io.FilenameUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -92,9 +90,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
 
         try {
             loadPlugin();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (DataException e) {
+        } catch (IOException | DataException e) {
             e.printStackTrace();
         }
 
@@ -146,23 +142,8 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         finishedLoading = true;
     }
 
-    // used to copy files from the .jar file to the config folders
-    public void copy(InputStream in, File file) {
-        try {
-            try (in;  OutputStream out = new FileOutputStream(file)) {
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     // returns an instance of the plugin
-    public static WorldSchematics getInstance() {
+    public static WorldSchematics instance() {
         return instance;
     }
 
@@ -191,7 +172,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
                     File ConfigFile = new File(worldPath, schematicfilename + ".yml");
                     if (!ConfigFile.exists()) {
                         getLogger().info("Schematic doesnt have config file, creating config file");
-                        plugin.copy(plugin.getResource("ExampleSchematic.yml"), ConfigFile);
+                        Utils.copy(plugin.getResource("ExampleSchematic.yml"), ConfigFile);
                     }
 
                     // if we should add missing config options. This deletes all
@@ -285,11 +266,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
                     //reload the configs and schematics
                     try {
                         reload();
-                    } catch (DataException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (ParseException e) {
+                    } catch (DataException | IOException | ParseException e) {
                         e.printStackTrace();
                     }
 
@@ -308,16 +285,14 @@ public class WorldSchematics extends JavaPlugin implements Listener {
 
                     try {
                         updateConfigs(true);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (DataException e) {
+                    } catch (IOException | DataException e) {
                         e.printStackTrace();
                     }
                 }
 
                 if (args[0].equalsIgnoreCase("info")) {
                     //display plugin version info
-                    getLogger().info("WorldSchematics2 version: " + pdf.getVersion());
+                    getLogger().log(Level.INFO, "WorldSchematics2 version: {0}", pdf.getVersion());
 
                     //send a message to the player if executed in game
                     if (IsPlayer) {
@@ -340,13 +315,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
                         SchematicManager.spawn(shcemticsName, spawnPos);
                     } catch (EmptyClipboardException e) {
                         e.printStackTrace();
-                    } catch (com.sk89q.worldedit.world.DataException e) {
-                        e.printStackTrace();
-                    } catch (MaxChangedBlocksException e) {
-                        e.printStackTrace();
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
+                    } catch (com.sk89q.worldedit.world.DataException | MaxChangedBlocksException | ParseException | IOException e) {
                         e.printStackTrace();
                     } catch (WorldEditException e) {
                         e.printStackTrace();
@@ -381,12 +350,11 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         return spawnSchematicsOn;
     }
 
-    public boolean getShowLocation() {
+    public boolean isShowLocation() {
         return showLocation;
     }
 
-    public File getBaseServerDirectory() {
-
+    public File baseServerDirectory() {
         return baseServerDir;
     }
 

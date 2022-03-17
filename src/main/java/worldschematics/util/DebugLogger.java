@@ -29,7 +29,7 @@ public class DebugLogger {
     private static File logFile;
 
     public DebugLogger() {
-        logger = WorldSchematics.getInstance().getLogger();
+        logger = WorldSchematics.instance().getLogger();
         createLogFile();
     }
 
@@ -75,7 +75,7 @@ public class DebugLogger {
     }
 
     public static void writeToLogFile(String message) {
-        if (logToFile == true && WorldSchematics.getInstance().isFinishedLoading() == true && logFile.exists()) {
+        if (logToFile == true && WorldSchematics.instance().isFinishedLoading() == true && logFile.exists()) {
             try {
                 FileOutputStream fos = new FileOutputStream(logFile);
                 try ( BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos))) {
@@ -97,7 +97,7 @@ public class DebugLogger {
         //create log file if it has not been created
         if (logToFile == true) {
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-            logFile = new File(WorldSchematics.getInstance().getDataFolder() + "/logs/" + "WorldSchematics2_" + timeStamp + ".txt");
+            logFile = new File(WorldSchematics.instance().getDataFolder() + "/logs/" + "WorldSchematics2_" + timeStamp + ".txt");
 
             if (!logFile.exists()) {
                 try {

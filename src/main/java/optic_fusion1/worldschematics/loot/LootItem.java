@@ -22,7 +22,7 @@ public class LootItem {
 
     private String configItemName;
     private String lootTable;
-    private File dataFolder = WorldSchematics.getInstance().getDataFolder();
+    private File dataFolder = WorldSchematics.instance().getDataFolder();
     private File lootFile;
     private ConfigurationSection lootConfig;
 
@@ -92,7 +92,7 @@ public class LootItem {
                     int enchantmentLevel = Integer.parseInt(splitEnchantment[1]);
 
                     // Adds the enchantment to the item
-                    Enchantment enchantment = Enchantment.getByKey(new NamespacedKey(WorldSchematics.getInstance(), splitEnchantment[0]));
+                    Enchantment enchantment = Enchantment.getByKey(new NamespacedKey(WorldSchematics.instance(), splitEnchantment[0]));
                     if (enchantment == null) {
                         DebugLogger.log("Unknown enchantment: " + splitEnchantment[0], DebugLogger.DebugType.WARNING);
                         continue;
@@ -125,8 +125,8 @@ public class LootItem {
         }
         if (itemType == ItemType.MYTHICMOBS_ITEM) {
             // Check if MythicMobs plugin is installed first
-            if (!WorldSchematics.getInstance().getMythicMobsInstalled()) {
-                WorldSchematics.getInstance().getLogger().info("Tried to place MythicMobs item in chest, but MythicMobs is not installed!");
+            if (!WorldSchematics.instance().getMythicMobsInstalled()) {
+                WorldSchematics.instance().getLogger().info("Tried to place MythicMobs item in chest, but MythicMobs is not installed!");
                 return;
             }
             MythicItem mythicItem = MythicMobs.inst().getItemManager().getItem(customPluginItemName).get();
@@ -134,29 +134,13 @@ public class LootItem {
             AbstractItemStack abstractItemStack = mythicItem.generateItemStack(itemAmount);
             item = BukkitAdapter.adapt(abstractItemStack);
         }
-        /*
-                if (Type == itemType.MYTHICMOBSITEM) {
-            //check if MythicMobs plugin is installed first
-            if (WorldSchematics.getMythicMobsInstalled() == true) {
-                MythicItem mi = MythicMobs.inst().getItemManager().getItem(CustomPluginItemName).get();
-                //to do, take into account Minamount and Maxamount
-                AbstractItemStack is = mi.generateItemStack(Amount);
-
-                //add the mythicmobs item
-                item = BukkitAdapter.adapt(is);
-            } else {
-                WorldSchematics.getInstance().getLogger().info("Tried to place MythicMobs item in chest, but MythicMobs is not installed!");
-            }
-
-        }
-         */
     }
 
     public ItemType itemType() {
         return itemType;
     }
 
-    void randomize() {
+    protected void randomize() {
         if (minAmount == maxAmount) {
             item.setAmount(minAmount);
             return;

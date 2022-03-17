@@ -19,7 +19,7 @@ import worldschematics.util.DebugLogger;
 public class LootTable {
 
     private Chest chest;
-    private File dataFolder = WorldSchematics.getInstance().getDataFolder();
+    private File dataFolder = WorldSchematics.instance().getDataFolder();
     private String lootTable;
     private File lootFile;
     private FileConfiguration lootConfig;

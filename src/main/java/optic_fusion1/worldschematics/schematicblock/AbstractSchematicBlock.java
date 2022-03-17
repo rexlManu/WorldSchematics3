@@ -15,7 +15,7 @@ public class AbstractSchematicBlock {
         this.name = name;
     }
 
-    public String name() {
+    public String getName() {
         return name;
     }
 
@@ -23,7 +23,7 @@ public class AbstractSchematicBlock {
         this.name = name;
     }
 
-    public Location location() {
+    public Location getLocation() {
         return schematicLocation;
     }
 
@@ -31,7 +31,7 @@ public class AbstractSchematicBlock {
         this.schematicLocation = location;
     }
 
-    public enum blockType {
+    public enum BlockType {
         SPAWNER, CONTAINER, MARKER
     }
 

@@ -13,7 +13,7 @@ import java.io.PrintWriter;
 
 public class BruteForceDebug {
 
-    String debugFileName = WorldSchematics.getInstance().getDataFolder() + "/bruteforce.txt";
+    String debugFileName = WorldSchematics.instance().getDataFolder() + "/bruteforce.txt";
 
     public Location bruteForceBlockLocation(Location blockPosition, Material blockMaterial, int rotation, Vector3 schematicSpawnLocation) throws IOException {
         World world = blockPosition.getWorld();
