@@ -226,7 +226,7 @@ public class SchematicManager implements Listener {
                 Random spawnChance = new Random();
 
                 // Get change of spawn from schematics config
-                double chanceOfSpawn = schematic.schematicConfig().getDouble("change", 10);
+                double chanceOfSpawn = schematic.schematicConfig().getDouble("chance", 10);
                 DebugLogger.log("Chance of schematic spawning: " + chanceOfSpawn, DebugLogger.DebugType.WORLDGENERATION);
                 if (0 + (10000 - 0) * spawnChance.nextDouble() <= chanceOfSpawn) {
                     spawnInChunk(chunk, world, schematic);

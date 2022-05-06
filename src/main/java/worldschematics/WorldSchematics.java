@@ -27,6 +27,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import worldschematics.util.DebugLogger;
 
 public class WorldSchematics extends JavaPlugin implements Listener {
+//
 
     private DebugLogger DBlogger;
 
@@ -163,8 +164,22 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         for (World world : getServer().getWorlds()) {
             getLogger().log(Level.INFO, "Checking schematic configs for world {0}", world.getName());
 
-            File worldPath = new File("WorldSchematics", "/schematics/" + world.getName());
-            File[] directoryListing = worldPath.listFiles();
+            System.out.println("is world null: " + (world == null));
+
+            File worldPath = null;
+            File[] directoryListing = new File[]{};
+            try {
+                worldPath = new File("WorldSchematics", "/schematics/" + world.getName());
+                if (!worldPath.exists()) {
+                    worldPath.mkdirs();
+                }
+                directoryListing = worldPath.listFiles();
+                System.out.println("is worldPath null: " + (worldPath == null));
+                System.out.println("is directoryListing null: " + (directoryListing == null));
+            } catch (Exception e) {
+                System.out.println("SHIT BROKE");
+            }
+
             for (File child : directoryListing) {
                 String fileext = FilenameUtils.getExtension(child.getAbsolutePath());
                 if (fileext.equals("schematic") == true) {
