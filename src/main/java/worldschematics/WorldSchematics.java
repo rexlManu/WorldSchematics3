@@ -42,6 +42,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
     private boolean spawnSchematicsOn = true;
     private boolean mythicMobsInstalled = false;
     private boolean mythicMobsLoaded = false;
+    private boolean itemsAdderInstalled = false;
 
     private SchematicManager sm;
 
@@ -79,7 +80,10 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         if (getServer().getPluginManager().getPlugin("MythicMobs") != null) {
             getLogger().info("MythicMobs detected, hooked into MythicMobs!");
             setMythicMobsInstalled(true);
-
+        }
+        if (getServer().getPluginManager().getPlugin("ItemsAdder") != null) {
+            getLogger().info("ItemsAdder detected, hooked into ItemsAdder!");
+            this.itemsAdderInstalled = true;
         }
 
         // register commands
@@ -373,4 +377,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
         return baseServerDir;
     }
 
+    public boolean isItemsAdderInstalled() {
+        return itemsAdderInstalled;
+    }
 }

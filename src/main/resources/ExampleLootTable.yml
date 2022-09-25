@@ -1,8 +1,8 @@
 Loot:
 
   SomeItemNameHere:
-    Type: <item/mythicmobsitem/crackshotitem>
-    Name: <name of mythimobitem or crackshot gun>
+    Type: <item/mythicmobs_item/crackshotitem/itemsadder_item>
+    Name: <name of mythimobitem or crackshot gun or itemsadder namespaceid>
     ID:
     Data:
     Display:

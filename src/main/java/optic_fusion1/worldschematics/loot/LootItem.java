@@ -1,5 +1,7 @@
 package optic_fusion1.worldschematics.loot;
 
+import dev.lone.itemsadder.api.CustomStack;
+import dev.lone.itemsadder.api.ItemsAdder;
 import io.lumine.xikage.mythicmobs.MythicMobs;
 import io.lumine.xikage.mythicmobs.adapters.AbstractItemStack;
 import io.lumine.xikage.mythicmobs.adapters.bukkit.BukkitAdapter;
@@ -134,6 +136,21 @@ public class LootItem {
             AbstractItemStack abstractItemStack = mythicItem.generateItemStack(itemAmount);
             item = BukkitAdapter.adapt(abstractItemStack);
         }
+        if(itemType == ItemType.ITEMSADDER_ITEM) {
+            // Check if ItemsAdder plugin is installed first
+            if (!WorldSchematics.instance().isItemsAdderInstalled()) {
+                WorldSchematics.instance().getLogger().info("Tried to place ItemsAdder item in chest, but ItemsAdder is not installed!");
+                return;
+            }
+
+            CustomStack customStack = CustomStack.getInstance(this.customPluginItemName);
+            if(customStack == null) {
+                WorldSchematics.instance().getLogger().info("ItemAdder item " + this.customPluginItemName + " does not exist!");
+                return;
+            }
+            this.item = customStack.getItemStack();
+            this.item.setAmount(ThreadLocalRandom.current().nextInt(minAmount, maxAmount + 1));
+        }
     }
 
     public ItemType itemType() {
@@ -162,7 +179,7 @@ public class LootItem {
     }
 
     public enum ItemType {
-        ITEM, MYTHICMOBS_ITEM;
+        ITEM, MYTHICMOBS_ITEM, ITEMSADDER_ITEM;
     }
 
 }
