@@ -83,3 +83,9 @@ maxspawns: 0
 
 #the number of times this schematic has spawned in the world. used to keep track of maxspawns
 TimesSpawned: 0
+
+block-flags:
+  # id of material
+  OAK_LEAVE:
+    flag: persistent
+    value: true
