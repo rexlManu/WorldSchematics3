@@ -52,6 +52,7 @@ public class SpawnSchematic {
     // Config options
     private String place;
     private boolean pasteAir;
+    private boolean pasteEntities;
     private boolean restrictBiomes;
     private List<String> biomesList = new ArrayList<>();
     private List<String> blockBlacklist = new ArrayList<>();
@@ -325,7 +326,12 @@ public class SpawnSchematic {
                     holder.setTransform(holder.getTransform().combine(transform));
 
                     // Perform paste
-                    Operation operation = holder.createPaste(editSession).to(BlockVector3.at(x, y, z)).ignoreAirBlocks(false).build();
+                    Operation operation = holder
+                        .createPaste(editSession)
+                        .to(BlockVector3.at(x, y, z))
+                        .copyEntities(this.pasteEntities)
+                        .ignoreAirBlocks(false)
+                        .build();
                     Operations.complete(operation);
                 }
             }
@@ -355,6 +361,7 @@ public class SpawnSchematic {
         DebugLogger.log("Name: " + name, DebugLogger.DebugType.SCHEMATICINFO);
 
         pasteAir = data.getBoolean("pasteAir", false);
+        pasteEntities = data.getBoolean("pasteEntities", false);
         place = data.getString("place", "ground");
         restrictBiomes = data.getBoolean("restrictBiomes", false);
         basementDepth = data.getInt("heightAdjustment", 0);

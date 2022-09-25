@@ -68,6 +68,9 @@ whitelistMode: false
 #whether to paste air blocks from the schematic. If set to false, air blocks wont be pasted
 pasteAir: true
 
+#whether to paste entities from the schematic. If set to false, entities wont be pasted
+pasteEntities: false
+
 #whether a WorldGuard region will be automatically created around the schematic when it is spawned, and any flags that will be set.
 #NOTE: This does not work yet
 regionSettings:
