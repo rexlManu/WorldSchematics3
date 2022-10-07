@@ -235,4 +235,7 @@ public class SchematicManager implements Listener {
         }
     }
 
+    public static HashMap<String, SpawnSchematic> getSchematics() {
+        return SCHEMATICS;
+    }
 }

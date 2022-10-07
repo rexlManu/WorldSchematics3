@@ -17,6 +17,7 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.session.ClipboardHolder;
+import com.sk89q.worldedit.world.DataException;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockType;
@@ -32,9 +33,11 @@ import java.util.Map;
 import java.util.Random;
 import javax.json.JsonException;
 import optic_fusion1.worldschematics.schematicblock.SchematicContainer;
+import optic_fusion1.worldschematics.schematicblock.SchematicContainer.ContainerType;
 import optic_fusion1.worldschematics.schematicblock.SchematicMarker;
 import optic_fusion1.worldschematics.schematicblock.SchematicSpawner;
 import optic_fusion1.worldschematics.util.Utils;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -48,11 +51,11 @@ import worldschematics.util.DebugLogger;
 
 public class SpawnSchematic {
 
-  private static WorldSchematics WORLD_SCHEMATICS = WorldSchematics.instance();
+  private static final WorldSchematics WORLD_SCHEMATICS = WorldSchematics.instance();
   private Random spawnChance;
   private boolean noSpawn;
-  private String name;
-  private World world;
+  private final String name;
+  private final World world;
   private Random random;
 
   // Config options
@@ -78,20 +81,20 @@ public class SpawnSchematic {
   private int chunkZ;
   private FileConfiguration data;
   private FileConfiguration blockDataConfig;
-  private File configFile;
-  private File blockDataConfigFile;
+  private final File configFile;
+  private final File blockDataConfigFile;
   private Map<String, BlockFlag> blockFlags;
 
   // Used to randomly place a schematic within a chunk
-  private Random randX = new Random();
-  private Random randY = new Random();
-  private Random randZ = new Random();
+  private final Random randX = new Random();
+  private final Random randY = new Random();
+  private final Random randZ = new Random();
 
   // Dimensions and stuff of the schematic
-  private int width;
-  private int length;
-  private int height;
-  private BlockVector3 origin;
+  private final int width;
+  private final int length;
+  private final int height;
+  private final BlockVector3 origin;
   private Vector3 offset;
 
   private int offsetX;
@@ -100,12 +103,12 @@ public class SpawnSchematic {
 
   private boolean enabled;
 
-  private File worldPath;
+  private final File worldPath;
   private File schematicFile;
 
   private double version;
 
-  private File dataFolder = WORLD_SCHEMATICS.getDataFolder();
+  private final File dataFolder = WORLD_SCHEMATICS.getDataFolder();
 
   // Special blocks
   private static final List<SchematicSpawner> SPAWNERS = new ArrayList<>();
@@ -214,7 +217,7 @@ public class SpawnSchematic {
           DebugLogger.DebugType.SCHEMATICSPAWNING);
 
       if (randomRotate && parRotation != -1) {
-        int randomNum = 0 + (int) (Math.random() * 4);
+        int randomNum = (int) (Math.random() * 4);
         switch (randomNum) {
           case 1 -> {
             rotation = 90;
@@ -311,7 +314,7 @@ public class SpawnSchematic {
           Block block = loc.getBlock();
           DebugLogger.log("Checking if block below schematic is " + materialName,
               DebugLogger.DebugType.SCHEMATICSPAWNING);
-          DebugLogger.log("Block below schematic location is " + block.getType().toString(),
+          DebugLogger.log("Block below schematic location is " + block.getType(),
               DebugLogger.DebugType.SCHEMATICSPAWNING);
           if (block.getType().toString().equals(materialName)) {
             DebugLogger.log("Blocks below schematic mathc block on list",
@@ -396,10 +399,148 @@ public class SpawnSchematic {
               .ignoreAirBlocks(false)
               .build();
           Operations.complete(operation);
+
+          int finalRotation = rotation;
+          Bukkit.getScheduler().runTaskLater(WorldSchematics.instance(), () -> {
+            this.applyContainerData(BlockVector3.at(x, y, z), finalRotation, clipboard, holder);
+          }, 1);
         }
       }
     }
     DebugLogger.log("==End Spawning Debug Info==", DebugLogger.DebugType.SCHEMATICSPAWNING);
+  }
+
+  private void applyContainerData(BlockVector3 pasteVector, int rotation, Clipboard clipboard,
+      ClipboardHolder holder) {
+    ConfigurationSection blocksSection = blockDataConfig.getConfigurationSection("Blocks");
+    if (blocksSection == null) {
+      return;
+    }
+
+    for (String key : blocksSection.getKeys(false)) {
+      ConfigurationSection section = blocksSection.getConfigurationSection(key);
+
+      BlockVector3 minimumPoint = clipboard.getMinimumPoint();
+      int relativeX = section.getInt("x") - minimumPoint.getBlockX();
+      int relativeY = section.getInt("y") - minimumPoint.getBlockY();
+      int relativeZ = section.getInt("z") - minimumPoint.getBlockZ();
+
+      Location maximumLocation = getMaximumLocation(clipboard,
+          new Location(world, pasteVector.getX(), pasteVector.getY(), pasteVector.getZ()),
+          rotation);
+      Location minimumLocation = getMinimumLocation(clipboard,
+          new Location(world, pasteVector.getX(), pasteVector.getY(), pasteVector.getZ()),
+          rotation);
+
+      // Find the minimum of all three axises.
+      int minX = Math.min(minimumLocation.getBlockX(), maximumLocation.getBlockX());
+      int minY = Math.min(minimumLocation.getBlockY(), maximumLocation.getBlockY());
+      int minZ = Math.min(minimumLocation.getBlockZ(), maximumLocation.getBlockZ());
+
+      BlockVector3 destination = rotateAround(
+          BlockVector3.at(relativeX, relativeY, relativeZ).add(minX, minY, minZ), pasteVector,
+          rotation);
+
+      DebugLogger.log(
+          "Destination: x %s, y %s, z %s".formatted(destination.getX(), destination.getY(),
+              destination.getZ()), DebugLogger.DebugType.SCHEMATICSPAWNING);
+
+      Location blockLocation = new Location(world, destination.getX(), destination.getY(),
+          destination.getZ());
+
+      String type = section.getString("type");
+
+      DebugLogger.log("Testing block settings for type %s and name %s".formatted(type, key),
+          DebugLogger.DebugType.SCHEMATICSPAWNING);
+
+      switch (type) {
+        case "mythicspawner":
+        case "spawner":
+        case "mob":
+        case "mythicmob":
+          SchematicSpawner spawner = getSpawner(key);
+          if (spawner != null) {
+            DebugLogger.log("Special block is a mob spawner",
+                DebugLogger.DebugType.SCHEMATICSPAWNING);
+            spawner.createInWorld(blockLocation);
+          } else {
+            DebugLogger.log("Special block name %s couldn't be found.".formatted(key));
+          }
+          break;
+
+        case "container":
+          SchematicContainer container = getContainer(key);
+          if (container != null) {
+            DebugLogger.log("Special block is a chest or container",
+                DebugLogger.DebugType.SCHEMATICSPAWNING);
+            try {
+              container.createInWorld(blockLocation);
+            } catch (IOException e) {
+              DebugLogger.log("Failed to create container in world: " + e.getMessage());
+            }
+          } else {
+            DebugLogger.log("Special block name %s couldn't be found.".formatted(key));
+          }
+          break;
+        case "marker":
+          SchematicMarker marker = getMarker(key);
+          if (marker != null) {
+            DebugLogger.log("Special block is a marker", DebugLogger.DebugType.SCHEMATICSPAWNING);
+            try {
+              marker.createInWorld(blockLocation);
+            } catch (IOException | DataException | WorldEditException | ParseException e) {
+              DebugLogger.log("Failed to create marker in world: " + e.getMessage());
+            }
+          } else {
+            DebugLogger.log("Special block name %s couldn't be found.".formatted(key));
+          }
+          break;
+      }
+    }
+  }
+
+  private BlockVector3 rotateAround(BlockVector3 point, BlockVector3 center, double angle) {
+    angle = Math.toRadians(angle * -1);
+    double rotatedX =
+        Math.cos(angle) * (point.getX() - center.getX()) - Math.sin(angle) * (point.getZ()
+            - center.getZ()) + center.getX();
+    double rotatedZ =
+        Math.sin(angle) * (point.getX() - center.getX()) + Math.cos(angle) * (point.getZ()
+            - center.getZ()) + center.getZ();
+
+    return BlockVector3.at(rotatedX, point.getY(), rotatedZ);
+  }
+
+  private Location getMinimumLocation(Clipboard clipboard, Location pasteLocation,
+      double rotation) {
+    BlockVector3 originalOrigin = clipboard.getOrigin();
+    BlockVector3 originalMinimumPoint = clipboard.getRegion().getMinimumPoint();
+
+    BlockVector3 originalMinimumOffset = originalOrigin.subtract(originalMinimumPoint);
+
+    BlockVector3 newOrigin = BukkitAdapter.asBlockVector(pasteLocation);
+    BlockVector3 newMinimumPoint = newOrigin.subtract(originalMinimumOffset);
+
+    BlockVector3 newRotatedMinimumPoint = rotateAround(newMinimumPoint, newOrigin, rotation);
+
+    return new Location(pasteLocation.getWorld(), newRotatedMinimumPoint.getX(),
+        newRotatedMinimumPoint.getY(), newRotatedMinimumPoint.getZ());
+  }
+
+  private Location getMaximumLocation(Clipboard clipboard, Location pasteLocation,
+      double rotation) {
+    BlockVector3 originalOrigin = clipboard.getOrigin();
+    BlockVector3 originalMaximumPoint = clipboard.getRegion().getMaximumPoint();
+
+    BlockVector3 originalMaximumOffset = originalOrigin.subtract(originalMaximumPoint);
+
+    BlockVector3 newOrigin = BukkitAdapter.asBlockVector(pasteLocation);
+    BlockVector3 newMaximumPoint = newOrigin.subtract(originalMaximumOffset);
+
+    BlockVector3 newRotatedMaximumPoint = rotateAround(newMaximumPoint, newOrigin, rotation);
+
+    return new Location(pasteLocation.getWorld(), newRotatedMaximumPoint.getX(),
+        newRotatedMaximumPoint.getY(), newRotatedMaximumPoint.getZ());
   }
 
   private void loadConfig() throws IOException, JsonException, ParseException {
@@ -479,9 +620,12 @@ public class SpawnSchematic {
             DebugLogger.DebugType.MOBSPAWNING);
 
         //iterate over every block in the schematic
-        for (int x = 0; x < clipboard.getDimensions().getX(); x++) {
-          for (int y = 0; y < clipboard.getDimensions().getY(); y++) {
-            for (int z = 0; z < clipboard.getDimensions().getZ(); z++) {
+        for (int x = clipboard.getMinimumPoint().getX(); x <= clipboard.getMaximumPoint().getX();
+            x++) {
+          for (int y = clipboard.getMinimumPoint().getY(); y <= clipboard.getMaximumPoint().getY();
+              y++) {
+            for (int z = clipboard.getMinimumPoint().getZ();
+                z <= clipboard.getMaximumPoint().getZ(); z++) {
               BlockVector3 bVector = BlockVector3.at(x, y, z);
 
               BlockState CurrentBlock = clipboard.getBlock(bVector);
@@ -493,7 +637,7 @@ public class SpawnSchematic {
                   DebugLogger.DebugType.MOBSPAWNING);
 
               //if block is a spawner
-              if (bType.getId().equals(BlockTypes.SPAWNER)) {
+              if (bType.equals(BlockTypes.SPAWNER)) {
 
                 SpecialBlockCount++;
                 String BlockName = "BlockNBT" + SpecialBlockCount;
@@ -501,11 +645,11 @@ public class SpawnSchematic {
                 DebugLogger.log("Block at " + x + " " + y + " " + z + " is a spawner",
                     DebugLogger.DebugType.MOBSPAWNING);
 
-                if (blockDataConfig.contains("Blocks." + BlockName) == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName)) {
                   blockDataConfig.createSection("Blocks." + BlockName);
                 }
 
-                if (blockDataConfig.contains("Blocks." + BlockName + ".type") == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName + ".type")) {
                   blockDataConfig.createSection("Blocks." + BlockName + ".type");
                   blockDataConfig.set("Blocks." + BlockName + ".type", "spawner");
                 }
@@ -514,11 +658,11 @@ public class SpawnSchematic {
                 blockDataConfig.createSection("Blocks." + BlockName + ".y");
                 blockDataConfig.createSection("Blocks." + BlockName + ".z");
 
-                if (blockDataConfig.contains("Blocks." + BlockName + ".mobs") == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName + ".mobs")) {
                   blockDataConfig.createSection("Blocks." + BlockName + ".mobs");
                 }
 
-                if (blockDataConfig.contains("Blocks." + BlockName + ".properties") == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName + ".properties")) {
                   blockDataConfig.createSection("Blocks." + BlockName + ".properties");
                 }
 
@@ -530,8 +674,9 @@ public class SpawnSchematic {
               }
 
               //if block is a chest of any type
-              if (bType.getId().equals(BlockTypes.CHEST) || bType.equals(
-                  BlockTypes.TRAPPED_CHEST)) {
+              if (bType.equals(BlockTypes.CHEST)
+                  || bType.equals(BlockTypes.TRAPPED_CHEST)
+                  || bType.equals(BlockTypes.BARREL)) {
 
                 SpecialBlockCount++;
                 String BlockName = "BlockNBT" + SpecialBlockCount;
@@ -539,11 +684,11 @@ public class SpawnSchematic {
                 DebugLogger.log("Block at " + x + " " + y + " " + z + " is a container",
                     DebugLogger.DebugType.LOOTTABLE);
 
-                if (blockDataConfig.contains("Blocks." + BlockName) == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName)) {
                   blockDataConfig.createSection("Blocks." + BlockName);
                 }
 
-                if (blockDataConfig.contains("Blocks." + BlockName + ".type") == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName + ".type")) {
                   blockDataConfig.createSection("Blocks." + BlockName + ".type");
                   blockDataConfig.set("Blocks." + BlockName + ".type", "container");
                 }
@@ -552,11 +697,11 @@ public class SpawnSchematic {
                 blockDataConfig.createSection("Blocks." + BlockName + ".y");
                 blockDataConfig.createSection("Blocks." + BlockName + ".z");
 
-                if (blockDataConfig.contains("Blocks." + BlockName + ".loottables") == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName + ".loottables")) {
                   blockDataConfig.createSection("Blocks." + BlockName + ".loottables");
                 }
 
-                if (blockDataConfig.contains("Blocks." + BlockName + ".properties") == false) {
+                if (!blockDataConfig.contains("Blocks." + BlockName + ".properties")) {
                   blockDataConfig.createSection("Blocks." + BlockName + ".properties");
                 }
 
@@ -568,7 +713,7 @@ public class SpawnSchematic {
               }
 
               //if block is a marker sign (wall sign or standing sign)
-              if (bType.getId().equals(BlockTypes.SIGN) || bType.equals(BlockTypes.WALL_SIGN)) {
+              if (bType.equals(BlockTypes.SIGN) || bType.equals(BlockTypes.WALL_SIGN)) {
 
                 DebugLogger.log("Block at " + x + " " + y + " " + z + " is a sign",
                     DebugLogger.DebugType.MARKER);
@@ -597,16 +742,16 @@ public class SpawnSchematic {
 
                   String BlockName = "Marker" + MarkerCount + "_" + signText[1];
 
-                  if (blockDataConfig.contains("Blocks." + BlockName) == false) {
+                  if (!blockDataConfig.contains("Blocks." + BlockName)) {
                     blockDataConfig.createSection("Blocks." + BlockName);
                   }
 
-                  if (blockDataConfig.contains("Blocks." + BlockName + ".type") == false) {
+                  if (!blockDataConfig.contains("Blocks." + BlockName + ".type")) {
                     blockDataConfig.createSection("Blocks." + BlockName + ".type");
                     blockDataConfig.set("Blocks." + BlockName + ".type", "marker");
                   }
 
-                  if (blockDataConfig.contains("Blocks." + BlockName + ".subtype") == false) {
+                  if (!blockDataConfig.contains("Blocks." + BlockName + ".subtype")) {
                     blockDataConfig.createSection("Blocks." + BlockName + ".subtype");
                     blockDataConfig.set("Blocks." + BlockName + ".subtype", "none");
                   }
@@ -615,15 +760,15 @@ public class SpawnSchematic {
                   blockDataConfig.createSection("Blocks." + BlockName + ".y");
                   blockDataConfig.createSection("Blocks." + BlockName + ".z");
 
-                  if (blockDataConfig.contains("Blocks." + BlockName + ".properties") == false) {
+                  if (!blockDataConfig.contains("Blocks." + BlockName + ".properties")) {
                     blockDataConfig.createSection("Blocks." + BlockName + ".properties");
                   }
 
-                  if (blockDataConfig.contains("Blocks." + BlockName + ".schematics") == false) {
+                  if (!blockDataConfig.contains("Blocks." + BlockName + ".schematics")) {
                     blockDataConfig.createSection("Blocks." + BlockName + ".schematics");
                   }
 
-                  if (blockDataConfig.contains("Blocks." + BlockName + ".mobs") == false) {
+                  if (!blockDataConfig.contains("Blocks." + BlockName + ".mobs")) {
                     blockDataConfig.createSection("Blocks." + BlockName + ".mobs");
                   }
 
@@ -643,7 +788,7 @@ public class SpawnSchematic {
 
   private void loadSchematicBlocks() {
     DebugLogger.log("Schematic special blocks", DebugLogger.DebugType.SCHEMATICINFO);
-    ConfigurationSection blocksSection = blockDataConfig.getConfigurationSection("blocks");
+    ConfigurationSection blocksSection = blockDataConfig.getConfigurationSection("Blocks");
     if (blocksSection == null) {
       DebugLogger.log("-blockdata file is empty, schematic contains no special blocks",
           DebugLogger.DebugType.SCHEMATICINFO);
@@ -670,7 +815,7 @@ public class SpawnSchematic {
             SchematicSpawner.SpawnerType.MYTHICMOB));
         case "container" -> CONTAINERS.add(
             new SchematicContainer(locationInSchematic, section, block,
-                SchematicContainer.ContainerType.CHEST));
+                ContainerType.CHEST));
         case "marker" -> MARKERS.add(new SchematicMarker(locationInSchematic, section, block));
         default -> {
         }

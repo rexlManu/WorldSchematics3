@@ -12,6 +12,9 @@ commands:
   worldschematics:
     description: The main worldschematics Command
     permission: worldschematics.admin
+  spawnstructure:
+    description: Spawn a structure
+    permission: worldschematics.admin
 
 permissions:
   worldschematics.*:

@@ -11,6 +11,7 @@ import java.text.ParseException;
 import java.util.logging.Level;
 import javax.json.JsonException;
 import optic_fusion1.worldschematics.SchematicManager;
+import optic_fusion1.worldschematics.command.SpawnStructureCommand;
 import optic_fusion1.worldschematics.util.Utils;
 import org.apache.commons.io.FilenameUtils;
 import org.bukkit.ChatColor;
@@ -88,6 +89,7 @@ public class WorldSchematics extends JavaPlugin implements Listener {
 
         // register commands
         this.getCommand("worldschematics").setExecutor(this);
+        this.getCommand("spawnstructure").setExecutor(new SpawnStructureCommand());
 
         // register listener
         //getServer().getPluginManager().registerEvents(new ChunkListener(this), this);
