@@ -697,8 +697,8 @@ public class SpawnSchematic {
                 blockDataConfig.createSection("Blocks." + BlockName + ".y");
                 blockDataConfig.createSection("Blocks." + BlockName + ".z");
 
-                if (!blockDataConfig.contains("Blocks." + BlockName + ".loottables")) {
-                  blockDataConfig.createSection("Blocks." + BlockName + ".loottables");
+                if (!blockDataConfig.contains("Blocks." + BlockName + ".lootTables")) {
+                  blockDataConfig.createSection("Blocks." + BlockName + ".lootTables");
                 }
 
                 if (!blockDataConfig.contains("Blocks." + BlockName + ".properties")) {
