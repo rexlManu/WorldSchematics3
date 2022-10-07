@@ -86,6 +86,6 @@ TimesSpawned: 0
 
 block-flags:
   # id of material
-  OAK_LEAVE:
+  OAK_LEAVES:
     flag: persistent
     value: true

@@ -1,26 +1,13 @@
-Loot:
+loot:
+  test:
+    type: item
+    material: APPLE
+    chance: 100
+    lore:
+      - "Test Apfel"
+    minAmount: 1
+    maxAmount: 10
 
-  SomeItemNameHere:
-    Type: <item/mythicmobs_item/crackshotitem/itemsadder_item>
-    Name: <name of mythimobitem or crackshot gun or itemsadder namespaceid>
-    ID:
-    Data:
-    Display:
-    Lore:
-      -"insert string here"
-    Enchantments:
-    - DAMAGE_ALL:2
-    Chance: <chance of the item>
-    
-    MinAmount:
-    MaxAmount:
-    
-#minimum required info for an item
-  SomeItemNameHere2:
-    Type: item
-    ID:
-    Chance: <chance of the item>
-    
-Options:
-  MaxItems: maximum amount of items to place in the chest
-  MinItems: minimum amount of items to place in the chest
+options:
+  maxItems: 10
+  minItems: 1
