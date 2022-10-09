@@ -51,7 +51,7 @@ public class LootItem {
         minAmount = lootConfig.getInt("minAmount", 1);
         maxAmount = lootConfig.getInt("maxAmount", 1);
         customPluginItemName = lootConfig.getString("name", "none");
-        configMaterial = lootConfig.getString("material").toUpperCase();
+        configMaterial = lootConfig.getString("material");
         lore = lootConfig.getStringList("lore");
         texturePlayer = lootConfig.getString("playerTexture", "");
         unbreakable = lootConfig.getBoolean("unbreakable", false);
