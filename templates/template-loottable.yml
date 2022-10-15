@@ -1,0 +1,31 @@
+loot:
+  all-options: #you can name this part whatever you want
+    type: item # can be item, mythicmobs_item, itemsadder_item
+    material: APPLE
+    chance: 100
+    name: 'custom plugin name' # This is requried to set the name of items adder or spawner names
+    playerTexture: "" # Set a player owner for a custom head, only names possible
+    unbreakable: false # Set the item unbreakable
+    hideAttributes: false # Hide attributes
+    display: "A display name" # Set the display name of the item
+    lore:
+      - "Test Apfel"
+    minAmount: 1
+    maxAmount: 10
+    enchantments:
+      - "minecraft:sharpness;1" # format is minecraft namespace; level
+  items-adder-example:
+    type: itemsadder_item
+    name: iaalchemy:astral_bow
+    chance: 100
+    minAmount: 1
+    maxAmount: 1
+  mythic-mobs-example:
+    type: mythicmobs_item
+    name: name of mob
+    chance: 100
+    minAmount: 1
+    maxAmount: 1
+options:
+  maxItems: 10
+  minItems: 6

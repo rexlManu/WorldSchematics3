@@ -1,0 +1,11 @@
+# You don't have to create this file. The plugin creates and fills it automatically.
+Blocks:
+  BlockNBT1:
+    type: container # can be container, spawner, marker
+    x: -100
+    y: -59
+    z: 336
+    lootTables: # for container
+      - example loot table name
+    mobs: { } # for spawner
+    properties: { }

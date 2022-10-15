@@ -74,7 +74,8 @@ public class LootTable {
     DebugLogger.log("Generating loot", DebugLogger.DebugType.LOOTTABLE);
 
     if (section == null) {
-      DebugLogger.log("loot file is empty or does not exist!", DebugLogger.DebugType.LOOTTABLE);
+      DebugLogger.log("loot file " + lootFile.toString() + " is empty or does not exist!",
+          DebugLogger.DebugType.LOOTTABLE);
       return;
     }
 
